@@ -1,0 +1,20 @@
+/* zentrale UI-overrides, eingebunden in alle form-templates.
+ * vor allem placeholder-kontrast: bootstrap default ist zu schwach,
+ * man verwechselt placeholder-text mit echter eingabe. */
+
+.form-control::placeholder,
+.form-select::placeholder,
+input::placeholder,
+textarea::placeholder {
+    color: #cbd5e1 !important;
+    opacity: 1;
+    font-style: italic;
+}
+
+.form-control,
+.form-select,
+input.form-control,
+select.form-select,
+textarea.form-control {
+    color: #1e293b;
+}
