@@ -1,0 +1,93 @@
+
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Create Project - Staging GUI</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body { background: #f0f4f8; min-height: 100vh; }
+        .card { border: none; border-radius: 12px; }
+        .card-header { border-radius: 12px 12px 0 0 !important; background: #0f172a; }
+        .form-control:focus, .form-select:focus { border-color: #0d6efd; box-shadow: 0 0 0 3px rgba(13,110,253,.15); }
+        .step-badge { background: #0d6efd; color: white; border-radius: 50%; width: 28px; height: 28px;
+                      display: inline-flex; align-items: center; justify-content: center;
+                      font-size: 13px; font-weight: 700; margin-right: 8px; }
+    </style>
+</head>
+<body>
+
+<!-- Navbar -->
+<nav th:replace="~{navbar :: navbar('project')}"></nav>
+
+<div class="container" style="max-width: 560px;">
+
+    <!-- Wizard Steps -->
+    <div class="d-flex align-items-center mb-4 gap-2">
+        <span class="step-badge">1</span><span class="fw-semibold text-dark">Project</span>
+        <div class="flex-grow-1 border-top mx-2"></div>
+        <a href="/project-config" class="step-badge" style="background:#94a3b8; text-decoration:none;">2</a><span class="text-muted">Configuration</span>
+        <div class="flex-grow-1 border-top mx-2"></div>
+        <a href="/project-defaults" class="step-badge" style="background:#94a3b8; text-decoration:none;">3</a><span class="text-muted">Defaults</span>
+        <div class="flex-grow-1 border-top mx-2"></div>
+        <a href="/device" class="step-badge" style="background:#94a3b8; text-decoration:none;">4</a><span class="text-muted">Devices</span>
+    </div>
+
+    <div class="card shadow-sm">
+        <div class="card-header py-3 px-4">
+            <h5 class="mb-0 text-white">Create Project</h5>
+            <small class="text-white-50">Step 1 of 4</small>
+        </div>
+        <div class="card-body p-4">
+
+            <div th:if="${error}" class="alert alert-danger" th:text="${error}"></div>
+
+            <form action="/project" method="post">
+
+                <div class="mb-3">
+                    <label class="form-label fw-semibold text-dark">Stager (Name)</label>
+                    <input type="text" name="stagerName" class="form-control" placeholder="e.g. Max Mustermann" required>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label fw-semibold text-dark">Customer</label>
+                    <input type="text" name="customer" class="form-control" placeholder="e.g. Acme GmbH" required>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label fw-semibold text-dark">Project title</label>
+                    <input type="text" name="projectTitle" class="form-control"
+                           placeholder="e.g. Rollout Berlin 2025"
+                           list="existingProjects" required>
+                    <datalist id="existingProjects">
+                        <option th:each="p : ${recentProjects}" th:value="${p.projectTitle}"
+                                th:text="${p.customer != null ? p.projectTitle + ' (' + p.customer + ')' : p.projectTitle}"></option>
+                    </datalist>
+                    <small class="text-muted" th:if="${not #lists.isEmpty(recentProjects)}">
+                        Existing projects appear as suggestions, so you can keep working on the same rollout.
+                    </small>
+                </div>
+
+                <div class="mb-4">
+                    <label class="form-label fw-semibold text-dark">Order number</label>
+                    <input type="text" name="orderNumber" class="form-control" placeholder="e.g. ORD-20250001" required>
+                </div>
+
+                <button type="submit" class="btn btn-primary w-100 py-2 fw-semibold">
+                    Next
+                </button>
+            </form>
+
+            <div class="text-center mt-3" th:if="${not #lists.isEmpty(recentProjects)}">
+                <a href="/project/clone" class="text-muted" style="font-size: 0.85rem;">
+                    Or clone an existing project as a template
+                </a>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+</body>
+</html>
