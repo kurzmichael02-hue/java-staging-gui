@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Clone Project - Staging GUI</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body { background: #f0f4f8; min-height: 100vh; }
+        .card { border: none; border-radius: 12px; }
+        .card-header { border-radius: 12px 12px 0 0 !important; background: #0f172a; }
+    </style>
+</head>
+<body>
+
+<nav th:replace="~{navbar :: navbar('project')}"></nav>
+
+<div class="container" style="max-width: 560px;">
+
+    <div class="card shadow-sm">
+        <div class="card-header py-3 px-4">
+            <h5 class="mb-0 text-white">Clone project from template</h5>
+            <small class="text-white-50">Copies network defaults and profile, devices stay empty</small>
+        </div>
+        <div class="card-body p-4">
+
+            <div th:if="${error}" class="alert alert-danger" th:text="${error}"></div>
+
+            <div th:if="${#lists.isEmpty(projects)}" class="alert alert-warning">
+                No projects available yet that could serve as a template.
+                <a href="/project">Create one first.</a>
+            </div>
+
+            <form th:if="${not #lists.isEmpty(projects)}" action="/project/clone" method="post">
+
+                <div class="mb-3">
+                    <label class="form-label fw-semibold text-dark">Template (source project)</label>
+                    <select name="sourceTitle" class="form-select" required>
+                        <option value="" disabled selected>Select project...</option>
+                        <option th:each="p : ${projects}" th:value="${p.projectTitle}"
+                                th:text="${p.customer != null ? p.projectTitle + ' (' + p.customer + ')' : p.projectTitle}"></option>
+                    </select>
+                    <small class="text-muted">Gateway, DNS, NTP, profile, template etc. are copied over.</small>
+                </div>
+
+                <hr class="my-4">
+
+                <div class="mb-3">
+                    <label class="form-label fw-semibold text-dark">New project title</label>
+                    <input type="text" name="projectTitle" class="form-control"
+                           placeholder="e.g. Rollout Berlin 2026 Phase 2" required>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label fw-semibold text-dark">Stager (Name)</label>
+                    <input type="text" name="stagerName" class="form-control"
+                           placeholder="e.g. Michael Kurz" required>
+                </div>
+
+                <div class="mb-4">
+                    <label class="form-label fw-semibold text-dark">Order number</label>
+                    <input type="text" name="orderNumber" class="form-control"
+                           placeholder="e.g. ORD-20260002" required>
+                </div>
+
+                <button type="submit" class="btn btn-primary w-100 py-2 fw-semibold">Clone and continue to devices</button>
+            </form>
+
+            <a href="/project" class="btn btn-link mt-3 w-100">Back to normal creation</a>
+        </div>
+    </div>
+</div>
+
+</body>
+</html>

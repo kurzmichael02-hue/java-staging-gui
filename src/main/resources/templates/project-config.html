@@ -1,0 +1,152 @@
+
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Project Configuration - Staging GUI</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body { background: #f0f4f8; min-height: 100vh; }
+        .card { border: none; border-radius: 12px; }
+        .card-header { border-radius: 12px 12px 0 0 !important; background: #0f172a; }
+        .form-control:focus, .form-select:focus { border-color: #0d6efd; box-shadow: 0 0 0 3px rgba(13,110,253,.15); }
+        .step-badge { background: #0d6efd; color: white; border-radius: 50%; width: 28px; height: 28px;
+                      display: inline-flex; align-items: center; justify-content: center;
+                      font-size: 13px; font-weight: 700; margin-right: 8px; }
+        .step-done { background: #22c55e; }
+    </style>
+</head>
+<body>
+
+<nav th:replace="~{navbar :: navbar('project')}"></nav>
+
+<div class="container" style="max-width: 560px;">
+
+    <div class="d-flex align-items-center mb-4 gap-2">
+        <a href="/project" class="step-badge step-done" style="text-decoration:none;">✓</a><span class="text-muted">Project</span>
+        <div class="flex-grow-1 border-top mx-2"></div>
+        <span class="step-badge">2</span><span class="fw-semibold text-dark">Configuration</span>
+        <div class="flex-grow-1 border-top mx-2"></div>
+        <a href="/project-defaults" class="step-badge" style="background:#94a3b8; text-decoration:none;">3</a><span class="text-muted">Defaults</span>
+        <div class="flex-grow-1 border-top mx-2"></div>
+        <a href="/device" class="step-badge" style="background:#94a3b8; text-decoration:none;">4</a><span class="text-muted">Devices</span>
+    </div>
+
+    <!-- Project context badge -->
+    <div th:if="${project != null}" class="alert alert-light border mb-3 py-2 px-3">
+        <small class="text-muted">Project: <b th:text="${project.projectTitle}"></b> &nbsp;|&nbsp; Customer: <b th:text="${project.customer}"></b></small>
+    </div>
+
+    <div class="card shadow-sm">
+        <div class="card-header py-3 px-4">
+            <h5 class="mb-0 text-white">Hardware configuration</h5>
+            <small class="text-white-50">Step 2 of 4</small>
+        </div>
+        <div class="card-body p-4">
+
+            <p th:if="${error}" class="alert alert-danger" th:text="${error}"></p>
+
+            <form action="/project-config" method="post">
+
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">Vendor</label>
+                    <select name="vendor" class="form-select">
+                        <option value="Cisco">Cisco</option>
+                    </select>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">Model</label>
+                    <select name="modelName" class="form-select" required>
+                        <option value="">Please select</option>
+                        <option value="C9200">C9200</option>
+                        <option value="C9300">C9300</option>
+                    </select>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">Configuration profile</label>
+                    <select name="configProfile" class="form-select" required onchange="showProfileInfo(this.value)">
+                        <option value="">Please select</option>
+                        <option value="S">Lite - Minimal</option>
+                        <option value="M">Standard</option>
+                        <option value="L">Extended - Full Security</option>
+                    </select>
+
+                    <div id="profileInfo" style="display:none; margin-top: 10px; border-radius: 8px; padding: 12px 16px; font-size: 0.85rem; line-height: 1.6;"></div>
+                </div>
+
+<script>
+const profiles = {
+    S: {
+        color: '#dbeafe',
+        border: '#93c5fd',
+        text: '#1e40af',
+        label: 'Lite - Minimal',
+        items: [
+            'Hostname',
+            'Management IP (VLAN 1)',
+            'Default Gateway',
+            'DNS Server',
+            'SSH (Version 2)'
+        ]
+    },
+    M: {
+        color: '#fef9c3',
+        border: '#fde047',
+        text: '#854d0e',
+        label: 'Standard',
+        items: [
+            'Everything from profile S',
+            'Uplink port configuration (Trunk)',
+            'Spanning-Tree Portfast'
+        ]
+    },
+    L: {
+        color: '#dcfce7',
+        border: '#86efac',
+        text: '#166534',
+        label: 'Extended - Full Security',
+        items: [
+            'Everything from profile M',
+            'AAA (Authentication, Authorization)',
+            'NTP Server',
+            'DHCP Snooping',
+            'SNMP Monitoring',
+            'Syslog to PRTG',
+            'Login Banner'
+        ]
+    }
+};
+
+function showProfileInfo(val) {
+    const box = document.getElementById('profileInfo');
+    if (!val || !profiles[val]) {
+        box.style.display = 'none';
+        return;
+    }
+    const p = profiles[val];
+    box.style.display = 'block';
+    box.style.background = p.color;
+    box.style.border = '1px solid ' + p.border;
+    box.style.color = p.text;
+    box.innerHTML = '<strong>' + p.label + '</strong><ul style="margin: 6px 0 0 0; padding-left: 18px;">'
+        + p.items.map(i => '<li>' + i + '</li>').join('')
+        + '</ul>';
+}
+</script>
+
+                <p class="text-muted small mb-4">The IOS-XE version is captured in step 3 (Network parameters).</p>
+
+                <button type="submit" class="btn btn-primary w-100 py-2 fw-semibold">
+                    Next
+                </button>
+            </form>
+
+        </div>
+    </div>
+</div>
+
+</body>
+</html>

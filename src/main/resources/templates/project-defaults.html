@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>General Information - Staging GUI</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body { background: #f0f4f8; min-height: 100vh; }
+        .card { border: none; border-radius: 12px; }
+        .card-header { border-radius: 12px 12px 0 0 !important; background: #0f172a; }
+        .form-control:focus, .form-select:focus { border-color: #0d6efd; box-shadow: 0 0 0 3px rgba(13,110,253,.15); }
+        .step-badge { background: #0d6efd; color: white; border-radius: 50%; width: 28px; height: 28px;
+                      display: inline-flex; align-items: center; justify-content: center;
+                      font-size: 13px; font-weight: 700; margin-right: 8px; }
+        .step-done { background: #22c55e; }
+        .section-title { font-size: 0.75rem; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase;
+                         color: #64748b; border-bottom: 1px solid #e2e8f0; padding-bottom: 8px; margin: 1.5rem 0 1rem; }
+        .optional-badge { color: #94a3b8; font-size: 0.75rem; font-weight: 400; text-transform: none; margin-left: 6px; }
+    </style>
+</head>
+<body>
+
+<nav th:replace="~{navbar :: navbar('project')}"></nav>
+
+<div class="container" style="max-width: 560px;">
+
+    <div class="d-flex align-items-center mb-4 gap-2">
+        <a href="/project" class="step-badge step-done" style="text-decoration:none;">✓</a><span class="text-muted">Project</span>
+        <div class="flex-grow-1 border-top mx-2"></div>
+        <a href="/project-config" class="step-badge step-done" style="text-decoration:none;">✓</a><span class="text-muted">Configuration</span>
+        <div class="flex-grow-1 border-top mx-2"></div>
+        <span class="step-badge">3</span><span class="fw-semibold text-dark">Defaults</span>
+        <div class="flex-grow-1 border-top mx-2"></div>
+        <a href="/device" class="step-badge" style="background:#94a3b8; text-decoration:none;">4</a><span class="text-muted">Devices</span>
+    </div>
+
+    <div th:if="${project != null}" class="alert alert-light border mb-3 py-2 px-3">
+        <small class="text-muted">Project: <b th:text="${project.projectTitle}"></b> &nbsp;|&nbsp; Customer: <b th:text="${project.customer}"></b></small>
+    </div>
+
+    <div class="card shadow-sm">
+        <div class="card-header py-3 px-4">
+            <h5 class="mb-0 text-white">Network parameters</h5>
+            <small class="text-white-50">Step 3 of 4</small>
+        </div>
+        <div class="card-body p-4">
+
+            <div th:if="${error}" class="alert alert-danger py-2 px-3" th:text="${error}"></div>
+
+            <form action="/project-defaults" method="post">
+
+                <div class="section-title">Gateway &amp; DNS</div>
+
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">Default Gateway IP</label>
+                    <input type="text" name="defaultGatewayIp" class="form-control" placeholder="192.168.1.1"
+                           th:value="${project != null ? project.defaultGatewayIp : ''}" required>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">Subnet Mask</label>
+                    <input type="text" name="subnetMask" id="subnetMask" class="form-control" placeholder="255.255.255.0"
+                           th:value="${project != null ? project.subnetMask : ''}" required>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">Local DNS Server IP</label>
+                    <input type="text" name="localDnsServerIp" class="form-control" placeholder="192.168.1.53"
+                           th:value="${project != null ? project.localDnsServerIp : ''}" required>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">NTP Server IP</label>
+                    <input type="text" name="ntpServer" class="form-control" placeholder="192.168.1.10"
+                           th:value="${project != null ? project.ntpServer : ''}" required>
+                </div>
+
+                <div class="section-title">Monitoring &amp; DHCP</div>
+
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">Local PRTG / Syslog IP <span class="optional-badge">(optional)</span></label>
+                    <input type="text" name="localPrtgSensorIp" class="form-control" placeholder="192.168.1.100"
+                           th:value="${project != null ? project.localPrtgSensorIp : ''}">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">Local DHCP Server IPs <span class="optional-badge">(comma-separated, optional)</span></label>
+                    <input type="text" name="localDhcpServerIps" class="form-control" placeholder="192.168.1.10, 192.168.1.11"
+                           th:value="${project != null ? project.localDhcpServerIps : ''}">
+                </div>
+
+                <div class="section-title">Site &amp; Template</div>
+
+                <div class="row g-3 mb-3">
+                    <div class="col">
+                        <label class="form-label fw-semibold">Site Country</label>
+                        <select name="siteCountry" class="form-select" required>
+                            <option value="">Please select</option>
+                            <option value="DE" th:selected="${project != null and project.siteCountry == 'DE'}">DE - Germany</option>
+                            <option value="AT" th:selected="${project != null and project.siteCountry == 'AT'}">AT - Austria</option>
+                            <option value="CH" th:selected="${project != null and project.siteCountry == 'CH'}">CH - Switzerland</option>
+                            <option value="NL" th:selected="${project != null and project.siteCountry == 'NL'}">NL - Netherlands</option>
+                            <option value="PL" th:selected="${project != null and project.siteCountry == 'PL'}">PL - Poland</option>
+                        </select>
+                    </div>
+                    <div class="col">
+                        <label class="form-label fw-semibold">Site ID</label>
+                        <input type="text" name="siteId" class="form-control" placeholder="FRA-01"
+                               th:value="${project != null ? project.siteId : ''}" required>
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">Template Filename</label>
+                    <input type="text" name="templateFileName" class="form-control"
+                           placeholder="e.g. cat9k-generic-template.cfg.j2"
+                           th:value="${project != null ? project.templateFileName : ''}"
+                           list="templateList" required>
+                    <datalist id="templateList">
+                        <option value="cat9k-generic-template.cfg.j2">
+                        <option value="asw-standard-template.cfg.j2">
+                        <option value="csw-standard-template.cfg.j2">
+                        <option value="wlc-standard-template.cfg.j2">
+                        <option value="kunde-spezifisch-template.cfg.j2">
+                    </datalist>
+                    <small class="text-muted">GitLab templates are suggested; you can also enter your own</small>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">IOSXE Version</label>
+                    <input type="text" name="iosxeVersion" class="form-control" placeholder="17.09.04a"
+                           th:value="${project != null ? project.iosxeVersion : ''}" required>
+                </div>
+
+                <button type="submit" class="btn btn-primary w-100 py-2 fw-semibold">Next</button>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    document.querySelector('input[name="defaultGatewayIp"]').addEventListener('input', function() {
+        var ip = this.value.trim();
+        var first = parseInt(ip.split('.')[0]);
+        var maskField = document.getElementById('subnetMask');
+        if (isNaN(first)) return;
+        if (first >= 1 && first <= 126)        maskField.value = '255.0.0.0';
+        else if (first >= 128 && first <= 191) maskField.value = '255.255.0.0';
+        else if (first >= 192 && first <= 223) maskField.value = '255.255.255.0';
+    });
+</script>
+</body>
+</html>
