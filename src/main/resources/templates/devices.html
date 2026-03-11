@@ -1,0 +1,465 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta http-equiv="refresh" content="10" th:if="${hasActive}">
+    <title>Dashboard - Staging GUI</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body { background: #f0f4f8; min-height: 100vh; }
+
+        .project-card { background: #fff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 1.25rem 1.5rem; margin-bottom: 1.5rem; }
+        .project-card .label { color: #94a3b8; font-size: 0.72rem; text-transform: uppercase; letter-spacing: 1px; }
+        .project-card .value { color: #1e293b; font-size: 0.9rem; font-weight: 600; }
+
+        .stat-card { background: #fff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 1rem 1.5rem; min-width: 110px; text-align: center; }
+        .stat-card .stat-num { font-size: 1.8rem; font-weight: 700; }
+        .stat-card .stat-lbl { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 1px; margin-top: 2px; }
+
+        .table { color: #1e293b; margin: 0; }
+        .table thead th { background: #f8fafc; color: #64748b; font-size: 0.75rem; font-weight: 700;
+                          letter-spacing: 1px; text-transform: uppercase; border-color: #e2e8f0;
+                          padding: 12px 16px; white-space: nowrap; }
+        .table tbody tr { border-color: #f1f5f9; transition: background 0.15s; }
+        .table tbody tr:hover { background: #f8fafc; }
+        .table tbody td { border-color: #f1f5f9; padding: 10px 16px; vertical-align: middle; font-size: 0.88rem; }
+        .table-responsive { border-radius: 12px; border: 1px solid #e2e8f0; background: #fff; }
+
+        .status-badge { padding: 4px 12px; border-radius: 20px; font-size: 0.73rem; font-weight: 700; letter-spacing: 0.5px; white-space: nowrap; }
+        .status-OPEN      { background: #dbeafe; color: #1d4ed8; border: 1px solid #93c5fd; }
+        .status-IN_PROGRESS{ background: #fef9c3; color: #92400e; border: 1px solid #fde047; }
+        .status-DONE     { background: #dcfce7; color: #166534; border: 1px solid #86efac; }
+        .status-ERROR     { background: #fee2e2; color: #991b1b; border: 1px solid #fca5a5; }
+
+        .webex-hint { background: #fef9c3; border: 1px solid #fde047; border-radius: 6px;
+                      padding: 4px 10px; font-size: 0.73rem; color: #92400e; margin-top: 4px; }
+
+        .btn-xs { padding: 4px 10px; font-size: 0.73rem; border-radius: 6px; font-weight: 600; border: none; cursor: pointer; }
+        .btn-start  { background: #3b82f6; color: #fff; }
+        .btn-start:hover  { background: #2563eb; color: #fff; }
+        .btn-start:disabled { opacity: 0.35; cursor: not-allowed; }
+        .btn-finish { background: #22c55e; color: #fff; }
+        .btn-finish:hover { background: #16a34a; color: #fff; }
+        .btn-finish:disabled { opacity: 0.35; cursor: not-allowed; }
+        .btn-retry  { background: #fef9c3; border: 1px solid #fde047 !important; color: #92400e; }
+        .btn-retry:hover  { background: #fef08a; color: #92400e; }
+        .btn-retry:disabled { opacity: 0.35; cursor: not-allowed; }
+        .btn-err    { background: #fee2e2; border: 1px solid #fca5a5 !important; color: #991b1b; }
+        .btn-err:hover    { background: #fecaca; color: #991b1b; }
+        .btn-cfg    { background: #f1f5f9; border: 1px solid #e2e8f0 !important; color: #64748b; }
+        .btn-cfg:hover    { background: #e2e8f0; color: #1e293b; }
+
+        .hostname-col { font-family: 'Courier New', monospace; color: #2563eb; font-weight: 600; }
+        .ip-col       { font-family: 'Courier New', monospace; color: #64748b; }
+        .assignee     { background: #f1f5f9; border-radius: 20px; padding: 2px 10px; font-size: 0.75rem; color: #64748b; }
+
+        .profile-s { background: #dbeafe; color: #1d4ed8; border: 1px solid #93c5fd; border-radius: 4px; padding: 2px 8px; font-size: 0.73rem; font-weight: 700; }
+        .profile-m { background: #fef9c3; color: #92400e; border: 1px solid #fde047; border-radius: 4px; padding: 2px 8px; font-size: 0.73rem; font-weight: 700; }
+        .profile-l { background: #dcfce7; color: #166534; border: 1px solid #86efac; border-radius: 4px; padding: 2px 8px; font-size: 0.73rem; font-weight: 700; }
+
+        .ports-box { background: #fff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 1rem 1.5rem; }
+
+        .filter-bar { background: #fff; border: 1px solid #e2e8f0; border-radius: 12px;
+                      padding: 0.75rem 1rem; display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+        .filter-status { border: 1px solid #e2e8f0; background: #f8fafc; color: #64748b;
+                         border-radius: 4px; padding: 4px 10px; font-size: 0.78rem; font-weight: 600;
+                         cursor: pointer; }
+        .filter-status:hover { background: #e2e8f0; }
+        .filter-status.active { background: #0f172a; color: #fff; border-color: #0f172a; }
+        .row-hidden { display: none !important; }
+    </style>
+</head>
+<body>
+
+<nav th:replace="~{navbar :: navbar('devices')}"></nav>
+
+<div class="container-fluid px-4 pb-5">
+
+    <!-- Header -->
+    <div class="d-flex align-items-center justify-content-between mb-4">
+        <div>
+            <h1 class="h3 fw-bold mb-0 text-dark">Dashboard</h1>
+            <p class="text-muted mb-0 mt-1" style="font-size: 0.88rem;">Device overview &amp; provisioning status</p>
+        </div>
+        <div class="d-flex gap-2">
+            <form id="bulk-form" action="/devices/bulk-start" method="post"
+                  th:attr="data-profile=${project != null ? project.configProfile : ''}"
+                  onsubmit="return confirmBulkStart();">
+                <button type="submit" id="bulk-start-btn" class="btn btn-success fw-semibold" disabled>
+                    Start selection (<span id="bulk-count">0</span>)
+                </button>
+            </form>
+            <form action="/project/reset" method="post"
+                  onsubmit="return confirm('End session and work on a different project? The devices here stay saved.');">
+                <button type="submit" class="btn btn-outline-danger fw-semibold"
+                        title="Ends this session. Devices stay in the DB.">Different project</button>
+            </form>
+            <a href="/metrics" class="btn btn-outline-secondary fw-semibold">Metrics</a>
+            <a href="/audit" class="btn btn-outline-secondary fw-semibold">Audit log</a>
+            <a href="/devices/export.csv" class="btn btn-outline-secondary fw-semibold">CSV export</a>
+            <a href="/devices/report.pdf" class="btn btn-outline-secondary fw-semibold">PDF report</a>
+            <a href="/devices/bulk-import" class="btn btn-outline-primary fw-semibold">Excel import</a>
+            <a href="/device" class="btn btn-primary fw-semibold">+ New device</a>
+        </div>
+    </div>
+
+    <!-- Project context -->
+    <div th:if="${project != null}" class="project-card mb-4">
+        <div class="row g-3 align-items-center">
+            <div class="col-auto">
+                <div class="label">Stager</div>
+                <div class="value" th:text="${project.stagerName}"></div>
+            </div>
+            <div class="col-auto">
+                <div class="label">Customer</div>
+                <div class="value" th:text="${project.customer}"></div>
+            </div>
+            <div class="col-auto">
+                <div class="label">Project</div>
+                <div class="value" th:text="${project.projectTitle}"></div>
+            </div>
+            <div class="col-auto">
+                <div class="label">Order</div>
+                <div class="value" th:text="${project.orderNumber}"></div>
+            </div>
+            <div class="col-auto" style="border-left: 1px solid #e2e8f0; padding-left: 1.5rem;">
+                <div class="label">Vendor</div>
+                <div class="value" th:text="${project.vendor}"></div>
+            </div>
+            <div class="col-auto">
+                <div class="label">Model</div>
+                <div class="value" th:text="${project.model}"></div>
+            </div>
+            <div class="col-auto">
+                <div class="label">Profile</div>
+                <div class="value" th:text="${project.configProfile}"></div>
+            </div>
+            <div class="col-auto">
+                <div class="label">IOS-XE</div>
+                <div class="value" th:text="${project.iosxeVersion}"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Statistics -->
+    <div class="d-flex flex-wrap gap-3 mb-4">
+        <div class="stat-card">
+            <div class="stat-num text-dark" th:text="${devices.size()}"></div>
+            <div class="stat-lbl text-muted">Total</div>
+        </div>
+        <div class="stat-card" style="border-color: #93c5fd;">
+            <div class="stat-num" style="color:#1d4ed8;" th:text="${#lists.size(devices.?[status.name() == 'OPEN'])}"></div>
+            <div class="stat-lbl" style="color:#1d4ed8;">Open</div>
+        </div>
+        <div class="stat-card" style="border-color: #fde047;">
+            <div class="stat-num" style="color:#92400e;" th:text="${#lists.size(devices.?[status.name() == 'IN_PROGRESS'])}"></div>
+            <div class="stat-lbl" style="color:#92400e;">In Progress</div>
+        </div>
+        <div class="stat-card" style="border-color: #86efac;">
+            <div class="stat-num" style="color:#166534;" th:text="${#lists.size(devices.?[status.name() == 'DONE'])}"></div>
+            <div class="stat-lbl" style="color:#166534;">Done</div>
+        </div>
+        <div class="stat-card" style="border-color: #fca5a5;">
+            <div class="stat-num" style="color:#991b1b;" th:text="${#lists.size(devices.?[status.name() == 'ERROR'])}"></div>
+            <div class="stat-lbl" style="color:#991b1b;">Error</div>
+        </div>
+    </div>
+
+    <!-- Port overview -->
+    <div class="ports-box mb-4" th:if="${not #lists.isEmpty(devices)}">
+        <div style="color: #64748b; font-size: 0.72rem; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 0.75rem;">
+            Used ports
+        </div>
+        <div class="d-flex flex-wrap gap-2">
+            <div th:each="device : ${devices}"
+                 style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 4px 12px; font-family: 'Courier New', monospace; font-size: 0.8rem;">
+                <span style="color: #64748b;" th:text="${device.upstreamSwitch}"></span>
+                <span style="color: #94a3b8;">:</span>
+                <span style="color: #2563eb;" th:text="${device.upstreamPort}"></span>
+                <span style="color: #94a3b8; margin-left: 4px;">&gt;</span>
+                <span style="color: #1e293b; margin-left: 4px;" th:text="${device.hostname}"></span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filter -->
+    <div class="filter-bar mb-3" th:if="${not #lists.isEmpty(devices)}">
+        <input type="text" id="filter-text" class="form-control" style="max-width: 320px;"
+               placeholder="Search: hostname, ip, serial, stager ...">
+        <div class="d-flex gap-1">
+            <button type="button" class="filter-status active" data-status="ALL">All</button>
+            <button type="button" class="filter-status" data-status="OPEN">Open</button>
+            <button type="button" class="filter-status" data-status="IN_PROGRESS">In Progress</button>
+            <button type="button" class="filter-status" data-status="DONE">Done</button>
+            <button type="button" class="filter-status" data-status="ERROR">Error</button>
+        </div>
+        <small class="text-muted ms-auto"><span id="filter-count">0</span> visible</small>
+    </div>
+
+    <!-- Table -->
+    <div class="table-responsive">
+        <table class="table table-borderless">
+            <thead>
+            <tr>
+                <th style="width: 32px;">
+                    <input type="checkbox" id="select-all" title="Select all OPEN devices">
+                </th>
+                <th>ID</th>
+                <th>Hostname</th>
+                <th>Serial</th>
+                <th>IP</th>
+                <th>Upstream</th>
+                <th>Model</th>
+                <th>Profile</th>
+                <th>Mode</th>
+                <th>Stager</th>
+                <th>Status</th>
+                <th>Step</th>
+                <th>Duration</th>
+                <th>Actions</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="device : ${devices}"
+                class="device-row"
+                th:attr="data-status=${device.status.name()}">
+                <td>
+                    <input type="checkbox" name="ids" form="bulk-form"
+                           class="row-select"
+                           th:value="${device.id}"
+                           th:disabled="${device.status.name() != 'OPEN'}"
+                           th:title="${device.status.name() != 'OPEN'} ? 'Only OPEN devices can be started' : 'Select'">
+                </td>
+                <td style="color: #94a3b8; font-size: 0.8rem;" th:text="${device.id}"></td>
+                <td class="hostname-col" th:text="${device.hostname}"></td>
+                <td style="font-family: 'Courier New', monospace; color: #64748b; font-size: 0.82rem;"
+                    th:text="${device.serialNumber != null && !device.serialNumber.isEmpty() ? device.serialNumber : '-'}"></td>
+                <td class="ip-col" th:text="${device.ip}"></td>
+                <td style="color: #64748b; font-family: 'Courier New', monospace; font-size: 0.82rem;"
+                    th:text="${device.upstreamSwitch} + ':' + ${device.upstreamPort}"></td>
+                <td style="color: #64748b;" th:text="${device.model}"></td>
+                <td>
+                    <span th:if="${device.configProfile == 'S'}" class="profile-s">Lite</span>
+                    <span th:if="${device.configProfile == 'M'}" class="profile-m">Standard</span>
+                    <span th:if="${device.configProfile == 'L'}" class="profile-l">Extended</span>
+                </td>
+                <td style="font-size: 0.78rem; color: #64748b; font-family: 'Courier New', monospace;"
+                    th:text="${device.configMode}"></td>
+                <td>
+                    <span class="assignee" th:text="${device.assignedTo != null && !device.assignedTo.isEmpty() ? device.assignedTo : '-'}"></span>
+                </td>
+                <td>
+                    <span class="status-badge"
+                          th:classappend="'status-' + ${device.status.name()}"
+                          th:text="${device.status}"></span>
+                    <div th:if="${device.status.name() == 'IN_PROGRESS'}" class="webex-hint">
+                        Waiting for Webex confirmation, then click "Done"
+                    </div>
+                    <div th:if="${device.status.name() == 'ERROR'}"
+                         style="color: #dc2626; font-size: 0.75rem; margin-top: 3px;"
+                         th:text="${device.errorMessage}"></div>
+                </td>
+                <td style="color: #64748b; font-size: 0.8rem;" th:text="${device.currentStep}"></td>
+                <td style="color: #94a3b8; font-size: 0.8rem; font-family: 'Courier New', monospace;">
+                    <span th:if="${device.startedAt == 0}">-</span>
+                    <span th:if="${device.startedAt != 0 && device.finishedAt == 0}" style="color: #92400e;">⟳ running</span>
+                    <span th:if="${device.finishedAt != 0}"
+                          th:text="${device.finishedAt - device.startedAt >= 60000 ?
+                              ((device.finishedAt - device.startedAt) / 60000) + 'min ' + (((device.finishedAt - device.startedAt) % 60000) / 1000) + 's' :
+                              ((device.finishedAt - device.startedAt) / 1000) + 's'}">
+                    </span>
+                </td>
+                <td>
+                    <div class="d-flex gap-1 flex-wrap">
+                        <form action="/device/start" method="post" style="display:inline;"
+                              th:attr="onsubmit='return confirmStart(' + ${device.id} + ')'">
+                            <input type="hidden" name="id" th:value="${device.id}">
+                            <button class="btn btn-xs btn-start" type="submit"
+                                    th:disabled="${device.status.name() != 'OPEN'}">▶ Start</button>
+                        </form>
+                        <form action="/device/finish" method="post" style="display:inline;">
+                            <input type="hidden" name="id" th:value="${device.id}">
+                            <button class="btn btn-xs btn-finish" type="submit"
+                                    th:disabled="${device.status.name() != 'IN_PROGRESS'}">✓ Done</button>
+                        </form>
+                        <form action="/device/retry" method="post" style="display:inline;">
+                            <input type="hidden" name="id" th:value="${device.id}">
+                            <button class="btn btn-xs btn-retry" type="submit"
+                                    th:disabled="${device.status.name() != 'ERROR'}">↺ Retry</button>
+                        </form>
+                        <form action="/device/error" method="post" style="display:inline;"
+                              onsubmit="return confirm('Mark device as ERROR?');">
+                            <input type="hidden" name="id" th:value="${device.id}"
+                                   th:attr="title='Manually mark device ' + ${device.hostname} + ' as ERROR'">
+                            <button class="btn btn-xs btn-err" type="submit" title="Mark as error">✕</button>
+                        </form>
+                        <form action="/device/delete" method="post" style="display:inline;"
+                              onsubmit="return confirm('Really delete device?');">
+                            <input type="hidden" name="id" th:value="${device.id}">
+                            <button class="btn btn-xs" type="submit"
+                                    style="background:#fee2e2; border:1px solid #fca5a5; color:#991b1b;">Delete</button>
+                        </form>
+                        <a th:href="@{/device/config(id=${device.id})}" class="btn btn-xs btn-cfg">Config</a>
+                    </div>
+                </td>
+            </tr>
+            <tr th:if="${#lists.isEmpty(devices)}">
+                <td colspan="14" class="text-center py-5 text-muted">
+                    No devices recorded yet.
+                    <a href="/device" class="text-primary">Create one now</a>
+                </td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
+<div id="configModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:9999; overflow:auto;">
+    <div style="background:#fff; border:1px solid #e2e8f0; border-radius:12px; max-width:700px; margin:5% auto; padding:2rem;">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h5 class="mb-0 text-dark">Config preview</h5>
+            <button onclick="closeModal()" style="background:none; border:none; color:#64748b; font-size:1.2rem; cursor:pointer;">✕</button>
+        </div>
+        <pre id="modalConfig" style="background:#0f172a; color:#e2e8f0; border-radius:8px; padding:16px; font-size:0.82rem; max-height:400px; overflow-y:auto;"></pre>
+        <div class="d-flex gap-2 mt-3 justify-content-between align-items-center">
+            <button onclick="copyConfig()" class="btn btn-outline-primary" id="copyBtn">Copy to clipboard</button>
+            <div class="d-flex gap-2">
+                <button onclick="closeModal()" class="btn btn-outline-secondary">Cancel</button>
+                <button onclick="submitStart()" class="btn btn-primary fw-semibold">▶ Start now</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+let pendingForm = null;
+
+function confirmStart(id) {
+    fetch('/device/config?id=' + id)
+        .then(r => r.text())
+        .then(html => {
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(html, 'text/html');
+            const config = doc.querySelector('pre');
+            document.getElementById('modalConfig').textContent = config ? config.textContent : 'No config available';
+            pendingForm = document.querySelector('form[onsubmit*="confirmStart(' + id + ')"]');
+            document.getElementById('configModal').style.display = 'block';
+        });
+    return false;
+}
+
+function closeModal() {
+    document.getElementById('configModal').style.display = 'none';
+    pendingForm = null;
+}
+
+function submitStart() {
+    if (pendingForm) { pendingForm.onsubmit = null; pendingForm.submit(); }
+    closeModal();
+}
+
+function copyConfig() {
+    const txt = document.getElementById('modalConfig').textContent;
+    const btn = document.getElementById('copyBtn');
+    const original = btn.textContent;
+    navigator.clipboard.writeText(txt).then(() => {
+        btn.textContent = 'Copied';
+        setTimeout(() => { btn.textContent = original; }, 1500);
+    }).catch(() => {
+        btn.textContent = 'Error - copy manually';
+        setTimeout(() => { btn.textContent = original; }, 2000);
+    });
+}
+
+// bulk-start fires without a config preview (unlike single start). so before
+// submitting, clearly state how many devices + which profile go out.
+function confirmBulkStart() {
+    const n = document.querySelectorAll('input.row-select:checked').length;
+    if (n === 0) return false;
+    const profile = document.getElementById('bulk-form').getAttribute('data-profile') || '?';
+    const profileName = { S: 'Lite', M: 'Standard', L: 'Extended' }[profile] || profile;
+    return confirm(n + ' device(s) will be provisioned with profile ' + profileName
+        + ' and sent to the ZTP server. Continue?');
+}
+
+// bulk-select: header checkbox toggles all OPEN rows, button state + counter follow the selection
+(function() {
+    const selectAll = document.getElementById('select-all');
+    const bulkBtn = document.getElementById('bulk-start-btn');
+    const bulkCount = document.getElementById('bulk-count');
+
+    function rowCheckboxes() {
+        return document.querySelectorAll('input.row-select:not(:disabled)');
+    }
+
+    function updateBulkState() {
+        const checked = document.querySelectorAll('input.row-select:checked').length;
+        bulkCount.textContent = checked;
+        bulkBtn.disabled = checked === 0;
+
+        // header checkbox only 'on' when all selectable rows are selected
+        const all = rowCheckboxes();
+        if (selectAll) {
+            selectAll.checked = all.length > 0 && checked === all.length;
+            selectAll.indeterminate = checked > 0 && checked < all.length;
+        }
+    }
+
+    if (selectAll) {
+        selectAll.addEventListener('change', function() {
+            rowCheckboxes().forEach(cb => { cb.checked = this.checked; });
+            updateBulkState();
+        });
+    }
+
+    document.querySelectorAll('input.row-select').forEach(cb => {
+        cb.addEventListener('change', updateBulkState);
+    });
+
+    updateBulkState();
+})();
+
+// search + status filter: combines text search + status pill, both AND-linked
+(function() {
+    const filterText = document.getElementById('filter-text');
+    const statusButtons = document.querySelectorAll('.filter-status');
+    const countEl = document.getElementById('filter-count');
+    if (!filterText) return;  // no devices, no filter bar rendered
+
+    let activeStatus = 'ALL';
+
+    function applyFilters() {
+        const q = filterText.value.toLowerCase().trim();
+        let visible = 0;
+
+        document.querySelectorAll('tr.device-row').forEach(row => {
+            const status = row.getAttribute('data-status');
+            const matchStatus = activeStatus === 'ALL' || activeStatus === status;
+            const matchText = q === '' || row.textContent.toLowerCase().includes(q);
+            const show = matchStatus && matchText;
+            row.classList.toggle('row-hidden', !show);
+            if (show) visible++;
+        });
+
+        if (countEl) countEl.textContent = visible;
+    }
+
+    filterText.addEventListener('input', applyFilters);
+
+    statusButtons.forEach(btn => {
+        btn.addEventListener('click', function() {
+            activeStatus = this.getAttribute('data-status');
+            statusButtons.forEach(b => b.classList.remove('active'));
+            this.classList.add('active');
+            applyFilters();
+        });
+    });
+
+    applyFilters();
+})();
+</script>
+</body>
+</html>

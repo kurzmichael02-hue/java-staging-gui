@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>New device - Staging GUI</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body { background: #f0f4f8; min-height: 100vh; }
+        .card { border: none; border-radius: 12px; }
+        .card-header { border-radius: 12px 12px 0 0 !important; background: #0f172a; }
+        .form-control:focus, .form-select:focus { border-color: #0d6efd; box-shadow: 0 0 0 3px rgba(13,110,253,.15); }
+        .step-badge { background: #0d6efd; color: white; border-radius: 50%; width: 28px; height: 28px;
+                      display: inline-flex; align-items: center; justify-content: center;
+                      font-size: 13px; font-weight: 700; margin-right: 8px; }
+        .step-done { background: #22c55e; }
+        .step-active { background: #e94560; }
+        .section-title { font-size: 0.75rem; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase;
+                         color: #64748b; border-bottom: 1px solid #e2e8f0; padding-bottom: 8px; margin: 1.5rem 0 1rem; }
+        .tooltip-text { color: #94a3b8; font-size: 0.75rem; font-weight: 400; text-transform: none; letter-spacing: 0; margin-top: 4px; display: block; }
+        .config-mode-btn { border: 2px solid #e2e8f0; background: #fff; color: #64748b; border-radius: 8px;
+                           padding: 12px 24px; cursor: pointer; transition: all 0.2s; flex: 1; text-align: center; }
+        .config-mode-btn.active { border-color: #0d6efd; background: rgba(13,110,253,0.05); color: #1e40af; }
+        .config-mode-btn input { display: none; }
+        textarea.form-control { font-family: 'Courier New', monospace; font-size: 0.85rem; resize: vertical; }
+        #customConfigSection { display: none; }
+    </style>
+</head>
+<body>
+
+<nav th:replace="~{navbar :: navbar('device')}"></nav>
+
+<div class="container" style="max-width: 560px;">
+
+    <div class="d-flex align-items-center mb-4 gap-2">
+        <a href="/project" class="step-badge step-done" style="text-decoration:none;">✓</a><span class="text-muted">Project</span>
+        <div class="flex-grow-1 border-top mx-2"></div>
+        <a href="/project-config" class="step-badge step-done" style="text-decoration:none;">✓</a><span class="text-muted">Configuration</span>
+        <div class="flex-grow-1 border-top mx-2"></div>
+        <a href="/project-defaults" class="step-badge step-done" style="text-decoration:none;">✓</a><span class="text-muted">Defaults</span>
+        <div class="flex-grow-1 border-top mx-2"></div>
+        <span class="step-badge step-active">4</span><span class="fw-semibold text-dark">Device</span>
+    </div>
+
+    <div th:if="${project != null}" class="alert alert-light border mb-3 py-2 px-3">
+        <small class="text-muted">Project: <b th:text="${project.projectTitle}"></b> &nbsp;|&nbsp; Customer: <b th:text="${project.customer}"></b></small>
+    </div>
+
+    <div th:if="${error}" class="alert alert-danger">
+        <span th:text="${error}"></span>
+    </div>
+
+    <div class="card shadow-sm">
+        <div class="card-header py-3 px-4">
+            <h5 class="mb-0 text-white">Device Information</h5>
+            <small class="text-white-50">Step 4 of 4</small>
+        </div>
+        <div class="card-body p-4">
+            <form action="/device" method="post">
+
+                <div class="mb-4">
+                    <label class="form-label fw-semibold">Config Mode</label>
+                    <span class="tooltip-text mb-2">Auto: configuration is generated automatically from the selected profile (Lite / Standard / Extended). Custom: you enter your own Cisco config.</span>
+                    <div class="d-flex gap-3 mt-2">
+                        <label class="config-mode-btn active" id="modeAutoBtn">
+                            <input type="radio" name="configMode" value="AUTO" checked onchange="toggleConfig(false)">
+                            Auto generate
+                        </label>
+                        <label class="config-mode-btn" id="modeCustomBtn">
+                            <input type="radio" name="configMode" value="CUSTOM" onchange="toggleConfig(true)">
+                            Custom Config
+                        </label>
+                    </div>
+                </div>
+
+                <div id="customConfigSection" class="mb-4">
+                    <label class="form-label fw-semibold">Custom Config</label>
+                    <textarea name="customConfig" class="form-control" rows="10"
+                              placeholder="! Cisco IOS Config&#10;hostname switch01&#10;!"></textarea>
+                </div>
+
+                <div class="section-title">Upstream</div>
+
+                <div class="row g-3 mb-3">
+                    <div class="col">
+                        <label class="form-label fw-semibold">Upstream Switch</label>
+                        <span class="tooltip-text">The switch you connect the new device to - that is, the staging switch in the warehouse.</span>
+                        <input type="text" name="upstreamSwitch" class="form-control mt-1"
+                               placeholder="e.g. sw-fra-01" required list="switchList">
+                        <datalist id="switchList">
+                            <option value="sw1">
+                            <option value="sw2">
+                            <option value="sw3">
+                            <option value="sw-fra-01">
+                            <option value="sw-cgn-01">
+                        </datalist>
+                    </div>
+                    <div class="col">
+                        <label class="form-label fw-semibold">Upstream Port</label>
+                        <span class="tooltip-text">The port on the staging switch where you plugged in the Ethernet cable - e.g. port 3.</span>
+                        <select name="upstreamPort" class="form-select mt-1" required>
+                            <option value="">Port</option>
+                            <th:block th:each="i : ${#numbers.sequence(1,48)}">
+                                <option th:value="${i}" th:text="${i}"></option>
+                            </th:block>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="section-title">Device Details</div>
+
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">Hostname</label>
+                    <span class="tooltip-text">Unique name of the switch - letters, numbers and hyphen only, 3-30 characters. Example: sw-fra-01</span>
+                    <input type="text" name="hostname" class="form-control mt-1"
+                           placeholder="sw-fra-01" required
+                           pattern="^[a-zA-Z0-9-]{3,30}$"
+                           title="Letters, numbers and hyphen only (3-30 characters)">
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">Serial number <span class="text-muted fw-normal" style="font-size:0.8rem;">(optional)</span></label>
+                    <span class="tooltip-text">Printed on the sticker on the back of the switch. Format: uppercase letters and numbers, e.g. FCW2144L0GH</span>
+                    <input type="text" name="serialNumber" class="form-control mt-1" placeholder="e.g. FCW2144L0GH">
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">Management IP</label>
+                    <span class="tooltip-text">The IP address the switch will be reachable at later.</span>
+                    <input type="text" name="ip" class="form-control mt-1"
+                           placeholder="10.10.10.1" required
+                           pattern="^(\d{1,3}\.){3}\d{1,3}$"
+                           title="Valid IPv4 address (e.g. 10.10.10.1)">
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">Location Name</label>
+                    <span class="tooltip-text">The switch's site name at the customer - e.g. Frankfurt DC A or IDF-GF.</span>
+                    <input type="text" name="locationName" class="form-control mt-1" placeholder="Frankfurt DC A" required>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">Stager <span class="text-muted fw-normal" style="font-size:0.8rem;">(optional)</span></label>
+                    <span class="tooltip-text">Who stages this device - shown in the dashboard and in the metrics.
+                        Tip: pick the name from the list so the statistics stay consistent.</span>
+                    <input type="text" name="assignedTo" class="form-control mt-1"
+                           placeholder="e.g. Michael Kurz"
+                           list="stagerList">
+                    <datalist id="stagerList">
+                        <option th:each="s : ${stagers}" th:value="${s}"></option>
+                    </datalist>
+                </div>
+
+                <button type="submit" class="btn btn-primary w-100 py-2 fw-semibold mt-3">Save device</button>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    function toggleConfig(isCustom) {
+        document.getElementById('customConfigSection').style.display = isCustom ? 'block' : 'none';
+        document.getElementById('modeAutoBtn').classList.toggle('active', !isCustom);
+        document.getElementById('modeCustomBtn').classList.toggle('active', isCustom);
+    }
+
+    function isValidIp(ip) {
+        const parts = ip.split('.');
+        if (parts.length !== 4) return false;
+        return parts.every(p => {
+            const n = parseInt(p);
+            return !isNaN(n) && n >= 0 && n <= 255 && String(n) === p;
+        });
+    }
+
+    function isValidHostname(h) {
+        return /^[a-zA-Z0-9-]{3,30}$/.test(h);
+    }
+
+    function setFieldState(inputEl, feedbackEl, valid, msg) {
+        if (inputEl.value.trim() === '') {
+            inputEl.style.borderColor = '';
+            feedbackEl.textContent = '';
+            return;
+        }
+        inputEl.style.borderColor = valid ? '#22c55e' : '#ef4444';
+        feedbackEl.textContent = (valid ? '✓ ' : '✗ ') + msg;
+        feedbackEl.style.color = valid ? '#16a34a' : '#dc2626';
+    }
+
+    const ipInput = document.querySelector('input[name="ip"]');
+    const ipFeedback = document.createElement('div');
+    ipFeedback.style.fontSize = '0.78rem'; ipFeedback.style.marginTop = '4px';
+    ipInput.parentNode.appendChild(ipFeedback);
+    ipInput.addEventListener('input', function() {
+        const v = this.value.trim();
+        setFieldState(this, ipFeedback, isValidIp(v), isValidIp(v) ? 'Valid IP address' : 'Invalid IP address (e.g. 10.10.10.1)');
+    });
+
+    const hostnameInput = document.querySelector('input[name="hostname"]');
+    const hostnameFeedback = document.createElement('div');
+    hostnameFeedback.style.fontSize = '0.78rem'; hostnameFeedback.style.marginTop = '4px';
+    hostnameInput.parentNode.appendChild(hostnameFeedback);
+    hostnameInput.addEventListener('input', function() {
+        const v = this.value.trim();
+        setFieldState(this, hostnameFeedback, isValidHostname(v), isValidHostname(v) ? 'Valid hostname' : 'Letters, numbers, hyphen only (3-30 characters)');
+    });
+
+    const serialInput = document.querySelector('input[name="serialNumber"]');
+    const serialFeedback = document.createElement('div');
+    serialFeedback.style.fontSize = '0.78rem'; serialFeedback.style.marginTop = '4px';
+    serialInput.parentNode.appendChild(serialFeedback);
+    serialInput.addEventListener('input', function() {
+        const v = this.value.trim();
+        if (v === '') { this.style.borderColor = ''; serialFeedback.textContent = ''; return; }
+        const valid = /^[A-Z0-9]{8,20}$/.test(v);
+        setFieldState(this, serialFeedback, valid, valid ? 'Valid serial number' : 'Format: uppercase letters and numbers (8-20 characters)');
+    });
+</script>
+</body>
+</html>

@@ -4,11 +4,17 @@
 
 <nav th:fragment="navbar(active)" class="navbar navbar-dark shadow-sm mb-4" style="background:#0f172a;">
     <div class="container-fluid px-4">
-        <a class="navbar-brand fw-bold text-white" href="/">Staging-GUI</a>
+        <a class="navbar-brand fw-bold text-white" href="/">Staging GUI</a>
         <div class="navbar-nav ms-auto flex-row gap-3">
             <a href="/project"
                th:classappend="${active == 'project'} ? 'text-white fw-semibold' : 'text-white-50'"
                class="nav-link">Project</a>
+            <a href="/devices"
+               th:classappend="${active == 'devices'} ? 'text-white fw-semibold' : 'text-white-50'"
+               class="nav-link">Overview</a>
+            <a href="/device"
+               th:classappend="${active == 'device'} ? 'text-white fw-semibold' : 'text-white-50'"
+               class="nav-link">+ Device</a>
         </div>
     </div>
 </nav>
