@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Import result - Staging GUI</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body { background: #f0f4f8; min-height: 100vh; }
+        .card { border: none; border-radius: 12px; }
+        .card-header { border-radius: 12px 12px 0 0 !important; background: #0f172a; }
+        .summary-tile { background: #fff; border: 1px solid #e2e8f0; border-radius: 8px;
+                        padding: 1rem 1.25rem; text-align: center; }
+        .summary-tile .num { font-size: 1.7rem; font-weight: 700; }
+        .summary-tile .lbl { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 1px;
+                             color: #64748b; margin-top: 2px; }
+        .err-item { background: #fee2e2; border: 1px solid #fca5a5; border-radius: 6px;
+                    padding: 8px 12px; margin-bottom: 6px; font-size: 0.85rem; color: #991b1b;
+                    font-family: 'Courier New', monospace; }
+        .ok-item { display: inline-block; background: #dcfce7; border: 1px solid #86efac;
+                   border-radius: 4px; padding: 2px 8px; margin: 2px; font-size: 0.78rem;
+                   color: #166534; font-family: 'Courier New', monospace; }
+    </style>
+</head>
+<body>
+
+<nav th:replace="~{navbar :: navbar('device')}"></nav>
+
+<div class="container" style="max-width: 760px;">
+
+    <div th:if="${project != null}" class="alert alert-light border mb-3 py-2 px-3">
+        <small class="text-muted">Project: <b th:text="${project.projectTitle}"></b></small>
+    </div>
+
+    <div class="card shadow-sm mb-4">
+        <div class="card-header py-3 px-4">
+            <h5 class="mb-0 text-white">Import result</h5>
+        </div>
+        <div class="card-body p-4">
+
+            <div class="row g-3 mb-4">
+                <div class="col-4">
+                    <div class="summary-tile">
+                        <div class="num text-dark" th:text="${result.total()}"></div>
+                        <div class="lbl">Rows total</div>
+                    </div>
+                </div>
+                <div class="col-4">
+                    <div class="summary-tile" style="border-color:#86efac;">
+                        <div class="num" style="color:#166534;" th:text="${result.imported().size()}"></div>
+                        <div class="lbl" style="color:#166534;">Imported</div>
+                    </div>
+                </div>
+                <div class="col-4">
+                    <div class="summary-tile" style="border-color:#fca5a5;">
+                        <div class="num" style="color:#991b1b;" th:text="${result.errors().size()}"></div>
+                        <div class="lbl" style="color:#991b1b;">Errors</div>
+                    </div>
+                </div>
+            </div>
+
+            <div th:if="${!result.imported().isEmpty()}" class="mb-4">
+                <h6 class="fw-semibold mb-2">Successfully created</h6>
+                <div>
+                    <span th:each="hostname : ${result.imported()}" class="ok-item" th:text="${hostname}"></span>
+                </div>
+            </div>
+
+            <div th:if="${result.hasErrors()}" class="mb-4">
+                <h6 class="fw-semibold mb-2 text-danger">Errors</h6>
+                <p class="text-muted" style="font-size: 0.85rem;">
+                    These rows were NOT created. Correct them in your Excel
+                    and upload only the error rows again.
+                </p>
+                <div>
+                    <div th:each="err : ${result.errors()}" class="err-item" th:text="${err}"></div>
+                </div>
+            </div>
+
+            <div class="d-flex gap-2 mt-3">
+                <a href="/devices" class="btn btn-primary fw-semibold flex-grow-1">To overview</a>
+                <a href="/devices/bulk-import" class="btn btn-outline-secondary">Import again</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+</body>
+</html>

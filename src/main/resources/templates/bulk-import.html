@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Bulk import - Staging GUI</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body { background: #f0f4f8; min-height: 100vh; }
+        .card { border: none; border-radius: 12px; }
+        .card-header { border-radius: 12px 12px 0 0 !important; background: #0f172a; }
+        .col-pill { background: #f1f5f9; border: 1px solid #e2e8f0; border-radius: 4px;
+                    padding: 2px 8px; font-family: 'Courier New', monospace; font-size: 0.78rem;
+                    color: #1e293b; display: inline-block; margin: 2px; }
+        .col-pill.req { background: #dbeafe; border-color: #93c5fd; color: #1d4ed8; }
+        .col-pill.opt { color: #64748b; }
+    </style>
+</head>
+<body>
+
+<nav th:replace="~{navbar :: navbar('device')}"></nav>
+
+<div class="container" style="max-width: 720px;">
+
+    <div th:if="${project != null}" class="alert alert-light border mb-3 py-2 px-3">
+        <small class="text-muted">Project: <b th:text="${project.projectTitle}"></b> &nbsp;|&nbsp;
+            Customer: <b th:text="${project.customer}"></b> &nbsp;|&nbsp;
+            Profile: <b th:text="${project.configProfile}"></b></small>
+    </div>
+
+    <div th:if="${error}" class="alert alert-danger" th:text="${error}"></div>
+
+    <div class="card shadow-sm mb-4">
+        <div class="card-header py-3 px-4">
+            <h5 class="mb-0 text-white">Import devices from Excel</h5>
+            <small class="text-white-50">Instead of one device at a time - several at once</small>
+        </div>
+        <div class="card-body p-4">
+
+            <p class="text-muted" style="font-size: 0.9rem;">
+                Upload a .xlsx file with one row per device. First row = column headers.
+                Maximum 500 rows per upload. Invalid rows are skipped and reported individually -
+                valid rows are still created.
+            </p>
+
+            <p class="mb-2 fw-semibold" style="font-size: 0.85rem;">Columns (order matters):</p>
+            <div class="mb-3">
+                <span class="col-pill req">upstreamSwitch</span>
+                <span class="col-pill req">upstreamPort</span>
+                <span class="col-pill req">hostname</span>
+                <span class="col-pill req">ip</span>
+                <span class="col-pill opt">serialNumber</span>
+                <span class="col-pill req">locationName</span>
+                <span class="col-pill opt">assignedTo</span>
+            </div>
+            <small class="text-muted d-block mb-4">
+                Blue = required. Grey = optional. Profile (S/M/L) and network data come from the
+                project - not from the Excel.
+            </small>
+
+            <a href="/devices/bulk-import/template" class="btn btn-outline-secondary mb-3 w-100">
+                Download template as .xlsx
+            </a>
+
+            <form action="/devices/bulk-import" method="post" enctype="multipart/form-data">
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">Excel file</label>
+                    <input type="file" name="file" class="form-control" accept=".xlsx" required>
+                </div>
+                <button type="submit" class="btn btn-primary w-100 py-2 fw-semibold">Upload</button>
+            </form>
+
+            <a href="/devices" class="btn btn-link mt-3 w-100">Back to overview</a>
+        </div>
+    </div>
+</div>
+
+</body>
+</html>
